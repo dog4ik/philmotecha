@@ -1,0 +1,577 @@
+definitions:
+  api.ActorPayload:
+    properties:
+      birth:
+        type: string
+      gender:
+        $ref: '#/definitions/db.GenderType'
+      name:
+        example: Daryl Dixon
+        type: string
+    type: object
+  api.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  api.MoviePayload:
+    properties:
+      description:
+        example: Boring movie about planents
+        maxLength: 1000
+        type: string
+      rating:
+        maximum: 10
+        minimum: 0
+        type: number
+      release_date:
+        type: string
+      title:
+        example: Inception
+        maxLength: 150
+        minLength: 1
+        type: string
+    type: object
+  api.NewMovieParams:
+    properties:
+      actors:
+        items:
+          type: integer
+        type: array
+      description:
+        type: string
+      rating:
+        type: number
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+  api.ServerError:
+    properties:
+      message:
+        type: string
+    type: object
+  api.UserPayload:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  db.Actor:
+    properties:
+      birth:
+        type: string
+      gender:
+        $ref: '#/definitions/db.GenderType'
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  db.Appuser:
+    properties:
+      id:
+        type: integer
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/db.UserRole'
+      username:
+        type: string
+    type: object
+  db.CreateActorParams:
+    properties:
+      birth:
+        type: string
+      gender:
+        $ref: '#/definitions/db.GenderType'
+      name:
+        type: string
+    type: object
+  db.GenderType:
+    enum:
+    - male
+    - female
+    - arch
+    type: string
+    x-enum-varnames:
+    - GenderTypeMale
+    - GenderTypeFemale
+    - GenderTypeArch
+  db.ListActorsRow:
+    properties:
+      birth:
+        type: string
+      gender:
+        $ref: '#/definitions/db.GenderType'
+      id:
+        type: integer
+      movies:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+    type: object
+  db.Movie:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      rating:
+        type: number
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+  db.UserRole:
+    enum:
+    - admin
+    - user
+    type: string
+    x-enum-varnames:
+    - UserRoleAdmin
+    - UserRoleUser
+info:
+  contact: {}
+  description: This is a simple movie library server.
+  title: Philmotecha API
+  version: "1.0"
+paths:
+  /add_actor:
+    post:
+      consumes:
+      - application/json
+      description: add by json actor
+      parameters:
+      - description: Add actor
+        in: body
+        name: actor
+        required: true
+        schema:
+          $ref: '#/definitions/db.CreateActorParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Actor'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: Add an actor
+      tags:
+      - actors
+  /add_movie:
+    post:
+      consumes:
+      - application/json
+      description: add by json movie
+      parameters:
+      - description: Add movie
+        in: body
+        name: movie
+        required: true
+        schema:
+          $ref: '#/definitions/api.NewMovieParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Movie'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: Add an movie
+      tags:
+      - movies
+  /add_user:
+    post:
+      consumes:
+      - application/json
+      description: add by json user
+      parameters:
+      - description: Add user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/api.UserPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Appuser'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      summary: Add an user
+      tags:
+      - users
+  /delete_actor/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete by json actor
+      parameters:
+      - description: Actor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: Delete an actor
+      tags:
+      - actors
+  /delete_movie/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete by json movie
+      parameters:
+      - description: Movie ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: Delete an movie
+      tags:
+      - movies
+  /list_actors:
+    get:
+      description: get actors
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.ListActorsRow'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: List actors
+      tags:
+      - actors
+  /list_movies:
+    get:
+      description: get movies
+      parameters:
+      - default: desc
+        description: Sort direction
+        enum:
+        - desc
+        - asc
+        in: query
+        name: sort_type
+        type: string
+      - default: rating
+        description: Sort property
+        enum:
+        - rating
+        - title
+        - date
+        in: query
+        name: sort_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.Actor'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: List movies
+      tags:
+      - movies
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: login user using password and username
+      parameters:
+      - description: Login user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/api.UserPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      summary: Login an user
+      tags:
+      - users
+  /search:
+    get:
+      consumes:
+      - application/json
+      description: Search by query
+      parameters:
+      - description: search by query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.Movie'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: Search lookup by fragment of movie's name or fragment of actor's name
+      tags:
+      - movies
+  /update_actor/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Update actor by json payload
+      parameters:
+      - description: Update actor
+        in: body
+        name: actor
+        required: true
+        schema:
+          $ref: '#/definitions/api.ActorPayload'
+      - description: Actor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: Update an actor
+      tags:
+      - actors
+  /update_movie/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Update by json movie
+      parameters:
+      - description: Update movie
+        in: body
+        name: movie
+        required: true
+        schema:
+          $ref: '#/definitions/api.MoviePayload'
+      - description: Movie ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ServerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ServerError'
+      security:
+      - JwtAuth: []
+      summary: Update a movie
+      tags:
+      - movies
+securityDefinitions:
+  JwtAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
