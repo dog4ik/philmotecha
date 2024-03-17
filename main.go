@@ -6,8 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/dog4ik/philmotecha/api"
+	"github.com/dog4ik/philmotecha/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 	"github.com/swaggo/http-swagger"
@@ -48,7 +51,27 @@ func main() {
 	conn := retry_db_connection(ctx, database_url)
 	defer conn.Close(ctx)
 
+	queries := db.New(conn)
+
+	connection := api.Database{Queries: *queries}
+
 	mux := http.NewServeMux()
+
+	authEnsurer := api.NewEnsureAnyAuth(queries)
+	adminAuthEnsurer := api.NewEnsureAdminAuth(queries)
+
+	mux.HandleFunc("POST /login", connection.LoginUser)
+	mux.Handle("GET /list_actors", authEnsurer(connection.ListActors))
+	mux.Handle("GET /list_movies", authEnsurer(connection.ListMovies))
+	mux.Handle("GET /search", authEnsurer(connection.SearchMovie))
+	mux.Handle("POST /add_actor", adminAuthEnsurer(connection.InsertActor))
+	mux.Handle("POST /add_movie", adminAuthEnsurer(connection.InsertMovie))
+	mux.HandleFunc("POST /add_user", connection.InsertUser)
+	mux.Handle("PATCH /update_actor/{id}", adminAuthEnsurer(connection.UpdateActor))
+	mux.Handle("PATCH /update_movie/{id}", adminAuthEnsurer(connection.UpdateMovie))
+	mux.Handle("DELETE /delete_actor/{id}", adminAuthEnsurer(connection.DeleteActor))
+	mux.Handle("DELETE /delete_movie/{id}", adminAuthEnsurer(connection.DeleteMovie))
+	mux.HandleFunc("DELETE /clear_db", connection.ClearDb)
 	mux.HandleFunc("GET /swagger/doc.json", swagger_config)
 	mux.HandleFunc("GET /swagger/*", httpSwagger.Handler(httpSwagger.URL("http://localhost:6969/swagger/doc.json")))
 
