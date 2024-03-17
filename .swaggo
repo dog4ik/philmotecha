@@ -1,0 +1,3 @@
+replace pgtype.Date string
+replace pgtype.Text string
+replace pgtype.Numeric number
