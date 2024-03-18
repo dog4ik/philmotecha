@@ -336,7 +336,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/db.ListActorsRow"
+                                "$ref": "#/definitions/api.DetailedActor"
                             }
                         }
                     },
@@ -678,6 +678,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "api.ActorMovie": {
+            "type": "object",
+            "properties": {
+                "ID": {
+                    "type": "integer"
+                },
+                "plot": {
+                    "type": "string"
+                },
+                "release_date": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "api.ActorPayload": {
             "type": "object",
             "properties": {
@@ -704,13 +721,33 @@ const docTemplate = `{
                 }
             }
         },
+        "api.DetailedActor": {
+            "type": "object",
+            "properties": {
+                "birth": {
+                    "type": "string"
+                },
+                "gender": {
+                    "$ref": "#/definitions/db.GenderType"
+                },
+                "movies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.ActorMovie"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "api.MoviePayload": {
             "type": "object",
             "properties": {
                 "description": {
                     "type": "string",
                     "maxLength": 1000,
-                    "example": "Boring movie about planents"
+                    "example": "Boring movie about planets"
                 },
                 "rating": {
                     "type": "number",
@@ -738,16 +775,23 @@ const docTemplate = `{
                     }
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "Boring movie about planets"
                 },
                 "rating": {
-                    "type": "number"
+                    "type": "number",
+                    "maximum": 10,
+                    "minimum": 0
                 },
                 "release_date": {
                     "type": "string"
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 1,
+                    "example": "Inception"
                 }
             }
         },
@@ -830,29 +874,6 @@ const docTemplate = `{
                 "GenderTypeFemale",
                 "GenderTypeArch"
             ]
-        },
-        "db.ListActorsRow": {
-            "type": "object",
-            "properties": {
-                "birth": {
-                    "type": "string"
-                },
-                "gender": {
-                    "$ref": "#/definitions/db.GenderType"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "movies": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
         },
         "db.Movie": {
             "type": "object",
