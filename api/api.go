@@ -74,16 +74,20 @@ func (self *Database) ListActors(w http.ResponseWriter, r *http.Request) {
 		error_response(w, "failed to list all actors", http.StatusInternalServerError)
 		return
 	}
-	out := make([]DetailedActor, len(actors))
+	var out []DetailedActor
 	for _, v := range actors {
 		var movies []ActorMovie
-		err = json.Unmarshal(v.Movies, &movies)
-		out = append(out, DetailedActor{
+    detailed_actor := DetailedActor{
 			Birth:  v.Birth,
 			Name:   v.Name,
 			Gender: v.Gender,
-			Movies: movies,
-		})
+			Movies: []ActorMovie{},
+		}
+		err = json.Unmarshal(v.Movies, &movies)
+    if err != nil {
+      detailed_actor.Movies = movies
+    }
+		out = append(out, detailed_actor)
 	}
 	if actors == nil {
 		emptySlice := []string{}
