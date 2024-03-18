@@ -237,7 +237,12 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (Appus
 const listActors = `-- name: ListActors :many
 SELECT 
     actor.id, actor.name, actor.gender, actor.birth,
-    ARRAY_AGG(Movie.id) FILTER (WHERE Movie.id IS NOT NULL)::int[] AS movies
+    JSON_AGG(json_build_object(
+        'ID', Movie.id,
+        'title', Movie.title,
+        'plot', Movie.description,
+        'release_date', Movie.release_date
+    )) AS movies
 FROM 
     Actor
 LEFT JOIN 
@@ -253,7 +258,7 @@ type ListActorsRow struct {
 	Name   string      `json:"name"`
 	Gender GenderType  `json:"gender"`
 	Birth  pgtype.Date `json:"birth"`
-	Movies []int32     `json:"movies"`
+	Movies []byte      `json:"movies"`
 }
 
 func (q *Queries) ListActors(ctx context.Context) ([]ListActorsRow, error) {

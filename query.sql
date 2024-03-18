@@ -5,7 +5,12 @@ WHERE id = $1 LIMIT 1;
 -- name: ListActors :many
 SELECT 
     Actor.*,
-    ARRAY_AGG(Movie.id) FILTER (WHERE Movie.id IS NOT NULL)::int[] AS movies
+    JSON_AGG(json_build_object(
+        'ID', Movie.id,
+        'title', Movie.title,
+        'plot', Movie.description,
+        'release_date', Movie.release_date
+    )) AS movies
 FROM 
     Actor
 LEFT JOIN 

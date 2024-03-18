@@ -42,13 +42,27 @@ func error_response(w http.ResponseWriter, message string, status int) {
 	}
 }
 
+type DetailedActor struct {
+	Birth  pgtype.Date   `json:"birth"`
+	Name   string        `json:"name"`
+	Gender db.GenderType `json:"gender"`
+	Movies []ActorMovie  `json:"movies"`
+}
+
+type ActorMovie struct {
+	Title       string  `json:"title"`
+	Id          int32   `json:"ID"`
+	Plot        *string `json:"plot"`
+	ReleaseDate *string `json:"release_date"`
+}
+
 // ListActors lists all existing actors
 //
 //	@Summary		List actors
 //	@Description	get actors
 //	@Tags			actors
 //	@Produce		json
-//	@Success		200	{array}		db.ListActorsRow
+//	@Success		200	{array}		DetailedActor
 //	@Failure		401	{object}	api.ServerError
 //	@Failure		500	{object}	api.ServerError
 //	@Router			/list_actors [get]
@@ -60,11 +74,23 @@ func (self *Database) ListActors(w http.ResponseWriter, r *http.Request) {
 		error_response(w, "failed to list all actors", http.StatusInternalServerError)
 		return
 	}
+	out := make([]DetailedActor, len(actors))
+	for _, v := range actors {
+		var movies []ActorMovie
+		err = json.Unmarshal(v.Movies, &movies)
+		out = append(out, DetailedActor{
+			Birth:  v.Birth,
+			Name:   v.Name,
+			Gender: v.Gender,
+			Movies: movies,
+		})
+	}
 	if actors == nil {
-		json_response(w, []string{}, http.StatusOK)
+		emptySlice := []string{}
+		json_response(w, emptySlice, http.StatusOK)
 		return
 	}
-	json_response(w, actors, http.StatusOK)
+	json_response(w, out, http.StatusOK)
 }
 
 // List movies lists all existing movies
@@ -159,17 +185,17 @@ func (self *Database) InsertActor(w http.ResponseWriter, r *http.Request) {
 }
 
 type NewMovieParams struct {
-	Title       string         `json:"title"`
-	Description pgtype.Text    `json:"description"`
+	Title       string         `json:"title" minLength:"1" maxLength:"150" example:"Inception"`
+	Description pgtype.Text    `json:"description" maxLength:"1000" example:"Boring movie about planets"`
 	ReleaseDate pgtype.Date    `json:"release_date"`
-	Rating      pgtype.Numeric `json:"rating"`
+	Rating      pgtype.Numeric `json:"rating" minimum:"0" maximum:"10"`
 	Actors      []int32        `json:"actors"`
 }
 
 // AddMovie
 //
 //	@Summary		Add an movie
-//	@Description	add by json movie
+//	@Description	Add a movie. Any invalid actor id will be ingored
 //	@Tags			movies
 //	@Accept			json
 //	@Produce		json
@@ -217,9 +243,8 @@ func (self *Database) InsertMovie(w http.ResponseWriter, r *http.Request) {
 				ActorID: actor_id,
 			})
 		if err != nil {
-			log.Printf("ERROR: Failed to create Movie: {%s}", err)
-			error_response(w, "failed to connect actor with movie", http.StatusInternalServerError)
-			return
+			log.Printf("ERROR: Failed connect actor with movie: {%s}", err)
+			continue
 		}
 	}
 	json_response(w, new_movie, http.StatusCreated)
@@ -286,7 +311,7 @@ func (self *Database) UpdateActor(w http.ResponseWriter, r *http.Request) {
 }
 
 type MoviePayload struct {
-	Description  pgtype.Text    `json:"description" maxLength:"1000" example:"Boring movie about planents"`
+	Description  pgtype.Text    `json:"description" maxLength:"1000" example:"Boring movie about planets"`
 	Rating       pgtype.Numeric `json:"rating" minimum:"0" maximum:"10"`
 	Release_date pgtype.Date    `json:"release_date"`
 	Title        pgtype.Text    `json:"title" minLength:"1" maxLength:"150" example:"Inception"`
